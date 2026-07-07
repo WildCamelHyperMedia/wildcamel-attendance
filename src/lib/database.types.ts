@@ -5,7 +5,11 @@ export type LocationContext = 'office' | 'remote' | 'unknown'
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type TaskPriority = 'low' | 'normal' | 'high'
 
-export interface Employee {
+// NB: these are `type` aliases, not `interface`s — supabase-js requires the
+// Row/Insert/Update shapes to be assignable to Record<string, unknown>, and
+// interfaces (unlike type aliases) lack the implicit index signature needed for
+// that, which would silently collapse the whole typed client to `never`.
+export type Employee = {
   id: string
   email: string
   full_name: string | null
@@ -15,7 +19,7 @@ export interface Employee {
   created_at: string
 }
 
-export interface AttendanceSession {
+export type AttendanceSession = {
   id: string
   employee_id: string
   check_in_at: string
@@ -32,7 +36,7 @@ export interface AttendanceSession {
   created_at: string
 }
 
-export interface AppSettings {
+export type AppSettings = {
   id: number
   office_lat: number | null
   office_lng: number | null
@@ -40,7 +44,7 @@ export interface AppSettings {
   display_tz: string
 }
 
-export interface Task {
+export type Task = {
   id: string
   title: string
   description: string | null
@@ -53,7 +57,10 @@ export interface Task {
   created_at: string
 }
 
-export interface Database {
+// Note: attendance_sessions and app_settings inserts/deletes are blocked at the
+// database (RLS + revoked privileges). The Insert/Update shapes below exist only
+// for the type-checker; the server is the real enforcement boundary.
+export type Database = {
   public: {
     Tables: {
       employees: {
@@ -64,25 +71,24 @@ export interface Database {
       }
       attendance_sessions: {
         Row: AttendanceSession
-        Insert: never // writes only via RPCs
-        Update: never
+        Insert: Partial<AttendanceSession> & Pick<AttendanceSession, 'employee_id'>
+        Update: Partial<AttendanceSession>
         Relationships: []
       }
       app_settings: {
         Row: AppSettings
-        Insert: never
+        Insert: Partial<AppSettings>
         Update: Partial<Omit<AppSettings, 'id'>>
         Relationships: []
       }
       tasks: {
         Row: Task
-        Insert: Partial<Task> &
-          Pick<Task, 'title' | 'assigned_to' | 'created_by'>
+        Insert: Partial<Task> & Pick<Task, 'title' | 'assigned_to' | 'created_by'>
         Update: Partial<Task>
         Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: Record<never, never>
     Functions: {
       check_in: {
         Args: { lat?: number | null; lng?: number | null; accuracy_m?: number | null }
@@ -96,10 +102,10 @@ export interface Database {
         Args: { session_id: string; note: string; out_at?: string | null }
         Returns: AttendanceSession
       }
-      me: { Args: Record<string, never>; Returns: string | null }
-      is_admin: { Args: Record<string, never>; Returns: boolean }
+      me: { Args: Record<never, never>; Returns: string | null }
+      is_admin: { Args: Record<never, never>; Returns: boolean }
     }
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
+    Enums: Record<never, never>
+    CompositeTypes: Record<never, never>
   }
 }

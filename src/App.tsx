@@ -1,28 +1,61 @@
-import lockupDusk from './assets/brand/lockup-dusk.png'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider, useAuth } from './lib/auth'
+import { LoadingScreen } from './components/ui'
+import Login from './routes/Login'
+import NotRegistered from './routes/NotRegistered'
+import AppLayout from './app/AppLayout'
+import Home from './app/Home'
+import History from './app/History'
+import Tasks from './app/Tasks'
+import AdminLayout from './admin/AdminLayout'
+import LiveBoard from './admin/LiveBoard'
+import Records from './admin/Records'
+import Employees from './admin/Employees'
+import AdminTasks from './admin/AdminTasks'
+import Settings from './admin/Settings'
 
-// Temporary shell — replaced by the real app in Phase 3.
-// Serves as a living smoke test of the Neon Dusk theme tokens.
-function App() {
+function Routed() {
+  const { state } = useAuth()
+
+  if (state.status === 'loading') return <LoadingScreen label="Signing you in…" />
+  if (state.status === 'anonymous') return <Login />
+  if (state.status === 'unregistered') return <NotRegistered email={state.email} />
+
+  const isAdmin = state.status === 'admin'
+
   return (
-    <div className="flex min-h-dvh flex-col">
-      <div className="spectrum-strand" />
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 text-center">
-        <img
-          src={lockupDusk}
-          alt="Wild Camel — Media Production"
-          className="w-full max-w-md select-none"
-          draggable={false}
-        />
-        <p className="text-display text-lg font-bold text-fg-2">
-          Attendance is being built
-        </p>
-        <p className="max-w-sm text-sm text-fg-3">
-          The check-in app for the Wild Camel team is on its way. Nothing to
-          see here yet — come back soon.
-        </p>
-      </main>
-    </div>
+    <Routes>
+      {/* Employee area (admins can use it too) */}
+      <Route path="/app" element={<AppLayout />}>
+        <Route index element={<Home />} />
+        <Route path="history" element={<History />} />
+        <Route path="tasks" element={<Tasks />} />
+      </Route>
+
+      {/* Admin area — gated by role. Non-admins are redirected out. */}
+      <Route
+        path="/admin"
+        element={isAdmin ? <AdminLayout /> : <Navigate to="/app" replace />}
+      >
+        <Route index element={<LiveBoard />} />
+        <Route path="records" element={<Records />} />
+        <Route path="employees" element={<Employees />} />
+        <Route path="tasks" element={<AdminTasks />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
+
+      {/* Default landing by role */}
+      <Route path="*" element={<Navigate to={isAdmin ? '/admin' : '/app'} replace />} />
+    </Routes>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <HashRouter>
+        <Routed />
+      </HashRouter>
+    </AuthProvider>
+  )
+}
