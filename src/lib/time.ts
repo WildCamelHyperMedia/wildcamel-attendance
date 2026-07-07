@@ -22,8 +22,25 @@ export function getDisplayTz() {
   return displayTz
 }
 
+// For an ISO string / Date that already carries an absolute instant, render it
+// in the display tz.
 export function inTz(iso: string | Date) {
   return dayjs(iso).tz(displayTz)
+}
+
+// For an OFFSET-LESS wall-clock string — a date-only key ("2026-07-08") or a
+// datetime-local value ("2026-07-08T20:30") that the user reads/enters as
+// display-tz local time — interpret it AS display-tz and return the absolute
+// instant. (Do NOT use inTz for these: dayjs() would parse them in the browser's
+// timezone first, and the later .tz() can't undo that.)
+export function fromDisplayTz(wallClock: string) {
+  return dayjs.tz(wallClock, displayTz)
+}
+
+// Format a date-only key (YYYY-MM-DD) for display — stable regardless of the
+// viewer's browser timezone.
+export function fmtDayKey(dayStr: string, format = 'ddd D MMM') {
+  return dayjs.tz(dayStr, displayTz).format(format)
 }
 
 /** e.g. "09:32" */

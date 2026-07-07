@@ -1,6 +1,6 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/auth'
-import { LoadingScreen } from './components/ui'
+import { Button, LoadingScreen } from './components/ui'
 import Login from './routes/Login'
 import NotRegistered from './routes/NotRegistered'
 import AppLayout from './app/AppLayout'
@@ -19,6 +19,7 @@ function Routed() {
 
   if (state.status === 'loading') return <LoadingScreen label="Signing you in…" />
   if (state.status === 'anonymous') return <Login />
+  if (state.status === 'error') return <ConnectionError email={state.email} />
   if (state.status === 'unregistered') return <NotRegistered email={state.email} />
 
   const isAdmin = state.status === 'admin'
@@ -50,6 +51,27 @@ function Routed() {
   )
 }
 
+// Shown when we're signed in but couldn't load the employee row (transient
+// network / server error). Retryable — never assumes the user isn't registered.
+function ConnectionError({ email }: { email: string }) {
+  const { refresh, signOut } = useAuth()
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
+      <h1 className="text-display text-2xl font-bold">Couldn't connect</h1>
+      <p className="max-w-sm text-sm text-fg-2">
+        We signed you in as <span className="text-fg">{email}</span> but couldn't
+        reach the server to load your account. Check your connection and try again.
+      </p>
+      <div className="flex gap-2">
+        <Button onClick={() => refresh()}>Try again</Button>
+        <Button variant="ghost" onClick={() => signOut()}>
+          Sign out
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -59,3 +81,4 @@ export default function App() {
     </AuthProvider>
   )
 }
+

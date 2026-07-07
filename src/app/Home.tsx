@@ -19,6 +19,7 @@ import {
   fmtHours,
   fmtStopwatch,
   fmtTime,
+  inTz,
 } from '../lib/time'
 import { ContextBadge, Notice, Skeleton, SpectrumStrand } from '../components/ui'
 import { CheckInButton, CheckOutButton } from './CheckButton'
@@ -98,26 +99,28 @@ export default function Home() {
     }
   }
 
+  // The live shift timer shows the full elapsed time since check-in.
   const liveMs = open ? elapsedMs(open.check_in_at, new Date(now)) : 0
 
-  // Total worked today = closed sessions' durations + the live one.
+  // "Worked today" = closed sessions today + only TODAY'S portion of the open
+  // session (so a shift left open overnight doesn't inflate today's total).
+  const startOfTodayMs = inTz(new Date(now)).startOf('day').valueOf()
+  const liveTodayMs = open
+    ? Math.max(0, now - Math.max(new Date(open.check_in_at).getTime(), startOfTodayMs))
+    : 0
   const closedMs = today
     .filter((s) => s.check_out_at)
     .reduce((sum, s) => sum + elapsedMs(s.check_in_at, s.check_out_at), 0)
-  const totalTodayMs = closedMs + liveMs
+  const totalTodayMs = closedMs + liveTodayMs
+
+  const nowInTz = inTz(new Date(now))
 
   return (
     <div className="space-y-5">
       <header className="pt-1">
-        <p className="text-sm text-fg-3">
-          {new Date(now).toLocaleDateString(undefined, {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
-        </p>
+        <p className="text-sm text-fg-3">{nowInTz.format('dddd D MMMM')}</p>
         <h1 className="text-display text-3xl font-bold">
-          Good {greeting(new Date(now).getHours())},{' '}
+          Good {greeting(nowInTz.hour())},{' '}
           {employee ? firstName(employee.full_name, employee.email) : ''}
         </h1>
       </header>

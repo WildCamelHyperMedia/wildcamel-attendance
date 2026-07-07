@@ -14,8 +14,10 @@ import {
   decimalHours,
   elapsedMs,
   fmtDateTime,
+  fmtDayKey,
   fmtHours,
   fmtTime,
+  fromDisplayTz,
   getDisplayTz,
   inTz,
 } from '../lib/time'
@@ -52,8 +54,9 @@ export default function Records() {
     setLoading(true)
     setError(null)
     try {
-      const fromIso = inTz(from).startOf('day').toISOString()
-      const toIso = inTz(to).endOf('day').toISOString()
+      // `from`/`to` are display-tz calendar days from the pickers, not browser-tz.
+      const fromIso = fromDisplayTz(from).startOf('day').toISOString()
+      const toIso = fromDisplayTz(to).endOf('day').toISOString()
       const [emps, sess] = await Promise.all([
         fetchEmployees(),
         fetchAllSessions(fromIso, toIso),
@@ -231,7 +234,7 @@ export default function Records() {
                               <td className="px-4 py-2.5 text-fg-2">
                                 {i === 0 ? (
                                   <div>
-                                    <div>{inTz(day).format('ddd D MMM')}</div>
+                                    <div>{fmtDayKey(day)}</div>
                                     <div className="text-[11px] text-fg-3">{fmtHours(dayMs)}</div>
                                   </div>
                                 ) : (
@@ -378,9 +381,9 @@ function FixSheet({
     setBusy(true)
     setError(null)
     try {
-      // Interpret the entered wall-clock time in the display tz → UTC ISO.
+      // The entered wall-clock time is display-tz local; convert to a UTC instant.
       const outIso = useCustomTime
-        ? inTz(outAt).toISOString()
+        ? fromDisplayTz(outAt).toISOString()
         : undefined
       await adminCloseSession(session.id, note.trim(), outIso)
       onSaved()

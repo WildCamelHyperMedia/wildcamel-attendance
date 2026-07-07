@@ -8,7 +8,7 @@ import type { AttendanceSession, Employee, Task } from '../lib/database.types'
 import { errorMessage } from '../lib/supabase'
 import { firstName } from '../lib/format'
 import { useNow } from '../lib/useNow'
-import { dayKey, elapsedMs, fmtHours, fmtStopwatch, fmtTime } from '../lib/time'
+import { dayKey, elapsedMs, fmtHours, fmtStopwatch, fmtTime, inTz } from '../lib/time'
 import { ContextBadge, EmptyState, Notice, Skeleton, SpectrumStrand } from '../components/ui'
 
 const OPEN_WARN_HOURS = 16
@@ -81,13 +81,7 @@ export default function LiveBoard() {
       <header>
         <h1 className="text-display text-3xl font-bold">Live board</h1>
         <p className="text-sm text-fg-3">
-          {new Date(now).toLocaleString(undefined, {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+          {inTz(new Date(now)).format('dddd D MMMM, HH:mm')}
         </p>
       </header>
 

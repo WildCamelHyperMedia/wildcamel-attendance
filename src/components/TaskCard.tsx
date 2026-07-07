@@ -1,5 +1,5 @@
 import type { Task, TaskStatus } from '../lib/database.types'
-import { inTz } from '../lib/time'
+import { fmtDayKey } from '../lib/time'
 import { isOverdue } from '../lib/tasks'
 
 const priorityDot: Record<Task['priority'], string> = {
@@ -90,7 +90,7 @@ export function TaskCard({
             {task.due_date && (
               <span className={overdue ? 'font-semibold text-danger-fg' : 'text-fg-3'}>
                 {overdue ? 'Overdue · ' : 'Due '}
-                {inTz(task.due_date).format('D MMM')}
+                {fmtDayKey(task.due_date, 'D MMM')}
               </span>
             )}
             {task.priority === 'high' && (

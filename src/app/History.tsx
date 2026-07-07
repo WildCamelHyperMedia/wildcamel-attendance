@@ -6,6 +6,7 @@ import {
   dayKey,
   dayjs,
   elapsedMs,
+  fmtDayKey,
   fmtHours,
   fmtTime,
   inTz,
@@ -88,7 +89,7 @@ export default function History() {
               className="min-w-[110px] shrink-0 rounded-xl border border-edge bg-dusk-800 px-3 py-2"
             >
               <p className="text-[11px] text-fg-3">
-                Week of {inTz(wk).format('D MMM')}
+                Week of {fmtDayKey(wk, 'D MMM')}
               </p>
               <p className="text-display text-lg font-bold text-fg">{fmtHours(ms)}</p>
             </div>
@@ -114,7 +115,7 @@ export default function History() {
               <section key={day}>
                 <div className="mb-1.5 flex items-baseline justify-between">
                   <h2 className="text-sm font-semibold text-fg-2">
-                    {inTz(day).format('ddd D MMM')}
+                    {fmtDayKey(day)}
                   </h2>
                   <span className="text-sm font-medium text-fg">
                     {fmtHours(dayMs)}

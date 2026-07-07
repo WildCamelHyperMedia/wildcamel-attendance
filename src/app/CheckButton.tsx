@@ -63,13 +63,21 @@ export function CheckOutButton({
   )
 
   const begin = useCallback(() => {
-    if (busy || fired.current) return
+    // Re-entrant guard: a second pointer (multi-touch) must not start a second
+    // RAF loop, or an orphaned loop could fire onCheckOut after release.
+    if (busy || fired.current || raf.current != null) return
+    start.current = null
     raf.current = requestAnimationFrame(tick)
   }, [busy, tick])
 
   useEffect(() => {
-    // Reset the one-shot latch whenever a checkout completes/fails and busy clears.
-    if (!busy) fired.current = false
+    // When a checkout attempt ends (success or failure) and busy clears, reset
+    // the latch AND the fill so a failed checkout doesn't leave the button stuck
+    // full at "Keep holding…". (On success the component unmounts anyway.)
+    if (!busy) {
+      fired.current = false
+      setProgress(0)
+    }
   }, [busy])
 
   useEffect(() => () => stop(), [stop])
