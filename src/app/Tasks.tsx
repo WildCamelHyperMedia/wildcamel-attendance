@@ -11,6 +11,7 @@ import type { Task, TaskStatus } from '../lib/database.types'
 import { errorMessage } from '../lib/supabase'
 import { Button, EmptyState, Notice, Skeleton } from '../components/ui'
 import { TaskCard } from '../components/TaskCard'
+import { PushToggle } from '../components/PushToggle'
 import { isOverdue } from '../lib/tasks'
 
 const GROUPS: { key: TaskStatus; label: string }[] = [
@@ -98,6 +99,8 @@ export default function Tasks() {
       </header>
 
       {error && <Notice>{error}</Notice>}
+
+      {meId && <PushToggle employeeId={meId} />}
 
       {loading ? (
         <div className="space-y-2">

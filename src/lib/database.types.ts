@@ -57,6 +57,16 @@ export type Task = {
   created_at: string
 }
 
+export type PushSubscriptionRow = {
+  id: string
+  employee_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  user_agent: string | null
+  created_at: string
+}
+
 // Note: attendance_sessions and app_settings inserts/deletes are blocked at the
 // database (RLS + revoked privileges). The Insert/Update shapes below exist only
 // for the type-checker; the server is the real enforcement boundary.
@@ -85,6 +95,13 @@ export type Database = {
         Row: Task
         Insert: Partial<Task> & Pick<Task, 'title' | 'assigned_to' | 'created_by'>
         Update: Partial<Task>
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: PushSubscriptionRow
+        Insert: Partial<PushSubscriptionRow> &
+          Pick<PushSubscriptionRow, 'employee_id' | 'endpoint' | 'p256dh' | 'auth'>
+        Update: Partial<PushSubscriptionRow>
         Relationships: []
       }
     }

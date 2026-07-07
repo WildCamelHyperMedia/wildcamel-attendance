@@ -9,6 +9,10 @@ const MIGRATION = readFileSync(
   new URL('../migrations/0001_init.sql', import.meta.url),
   'utf8',
 )
+const PUSH_MIGRATION = readFileSync(
+  new URL('../migrations/0002_push.sql', import.meta.url),
+  'utf8',
+)
 
 const db = new PGlite()
 let pass = 0
@@ -295,6 +299,52 @@ console.log('\n[8] Deactivation')
   check('deactivated employee still sees own row (for the blocked screen)', own.ok && own.rows.length === 1 && own.rows[0].active === false)
   const tasks = await as('malak@wildcamel.tv', `select id from public.tasks;`)
   check('deactivated employee sees no tasks', tasks.ok && tasks.rows.length === 0, JSON.stringify(tasks))
+}
+
+// --- 9. Push subscriptions (0002_push.sql) ----------------------------------
+console.log('\n[9] Push subscriptions')
+{
+  try {
+    await raw(PUSH_MIGRATION)
+    check('push migration runs without error', true)
+  } catch (e) {
+    check('push migration runs without error', false, String(e?.message ?? e))
+  }
+
+  const ids = {}
+  for (const r of (await raw(`select id, email from public.employees;`)).at(-1).rows) ids[r.email] = r.id
+
+  // Emmad subscribes his own device.
+  const ins = await as(
+    'emmad@wildcamel.tv',
+    `insert into public.push_subscriptions (employee_id, endpoint, p256dh, auth)
+     values ((select public.me()), 'https://push.example/emmad-1', 'p', 'a') returning id;`,
+  )
+  check('employee can insert own subscription', ins.ok && ins.rows.length === 1, JSON.stringify(ins))
+
+  // Cannot subscribe on someone else's behalf.
+  const forge = await as(
+    'emmad@wildcamel.tv',
+    `insert into public.push_subscriptions (employee_id, endpoint, p256dh, auth)
+     values ('${ids['malak@wildcamel.tv']}', 'https://push.example/forge', 'p', 'a') returning id;`,
+  )
+  check('employee cannot subscribe for someone else', !forge.ok || forge.rows.length === 0, JSON.stringify(forge.rows ?? forge.error))
+
+  // Rakesh cannot see Emmad's subscription.
+  const spy = await as('rakesh@wildcamel.tv', `select * from public.push_subscriptions;`)
+  check("employee cannot read others' subscriptions", spy.ok && spy.rows.length === 0, JSON.stringify(spy))
+
+  // Even admin has no read policy (only the service role, which bypasses RLS).
+  const adminRead = await as('rudy@wildcamel.tv', `select * from public.push_subscriptions;`)
+  check('admin also cannot read subscriptions via RLS (service role only)', adminRead.ok && adminRead.rows.length === 0, JSON.stringify(adminRead))
+
+  // Emmad can delete his own.
+  const del = await as('emmad@wildcamel.tv', `delete from public.push_subscriptions where endpoint = 'https://push.example/emmad-1' returning id;`)
+  check('employee can delete own subscription', del.ok && del.rows.length === 1, JSON.stringify(del))
+
+  // anon cannot touch the table.
+  const anon = await asAnon(`select * from public.push_subscriptions;`)
+  check('anon cannot read subscriptions', !anon.ok)
 }
 
 console.log(`\n==== ${pass} passed, ${fail} failed ====`)
