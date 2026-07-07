@@ -1,1 +1,107 @@
+/* Wild Camel — "Neon Dusk" design system
+   Palette derived from the logo: black camel body on violet-cast dusk,
+   sunset-gradient strokes (gold → orange → crimson → magenta → violet → indigo).
+   One interactive accent: Dusk Violet #8430FC (the camel's foreleg stroke).
+   The full 6-stop gradient is reserved for signature moments only:
+   the spectrum strand hairline, the check-in ring/fuse, empty states. */
+
 @import "tailwindcss";
+@import "@fontsource-variable/big-shoulders";
+@import "@fontsource-variable/schibsted-grotesk";
+@import "@fontsource-variable/spline-sans-mono";
+
+@theme {
+  /* Fonts */
+  --font-display: "Big Shoulders Variable", "Arial Narrow", sans-serif;
+  --font-sans: "Schibsted Grotesk Variable", system-ui, sans-serif;
+  --font-mono: "Spline Sans Mono Variable", ui-monospace, monospace;
+
+  /* Dusk ground (dark → elevated) */
+  --color-dusk-950: #0d0a12; /* recessed: sidebar, scrim base */
+  --color-dusk-900: #120e1a; /* app background */
+  --color-dusk-800: #1a1424; /* surface-1: cards, rows, sheets */
+  --color-dusk-700: #231b31; /* surface-2: popovers, hover, sticky headers */
+  --color-dusk-600: #2c2340; /* surface-3: pressed/active */
+
+  /* Borders */
+  --color-edge: #2a2138;
+  --color-edge-strong: #3e3258;
+
+  /* Text (all AA+ on dusk-900) */
+  --color-fg: #f4f1fa; /* 17.0:1 */
+  --color-fg-2: #b4acc6; /* 8.8:1 */
+  --color-fg-3: #948ba8; /* 5.9:1 — muted, timestamps/placeholders */
+  --color-fg-inverse: #120e1a; /* on gold / oasis fills */
+
+  /* Accent — Dusk Violet */
+  --color-accent-300: #b98cff; /* links, accent text (7.5:1) */
+  --color-accent-400: #a165ff; /* hover */
+  --color-accent-500: #8430fc; /* buttons, focus, toggles (white text: 5.5:1) */
+  --color-accent-600: #6e1fe0; /* pressed */
+  --color-accent-900: #241243; /* selected tint */
+
+  /* Semantic */
+  --color-oasis: #2ecc9a; /* success — checked in, done (9.3:1) */
+  --color-oasis-tint: #0f2a20;
+  --color-gold: #f0b448; /* warning + Office badge fg */
+  --color-gold-tint: #2b2013;
+  --color-danger: #f02448; /* rails/dots only, never small text */
+  --color-danger-fg: #ff5a75; /* danger text (6.3:1) */
+  --color-danger-tint: #2e0e16;
+  --color-overdue-row: #1f0f16;
+
+  /* Badges */
+  --color-remote: #e15dff; /* Remote badge fg — lightened logo magenta */
+  --color-remote-tint: #2c1233;
+  --color-unknown-tint: #221c2e;
+
+  /* Gradient stops (spectrum flourish only — never text, never fills) */
+  --color-grad-gold: #f0b448;
+  --color-grad-orange: #f06c18;
+  --color-grad-crimson: #f02448;
+  --color-grad-magenta: #d830fc;
+  --color-grad-violet: #8430fc;
+  --color-grad-indigo: #3c24cc;
+}
+
+:root {
+  --spectrum: linear-gradient(
+    90deg,
+    #f0b448,
+    #f06c18,
+    #f02448,
+    #d830fc,
+    #8430fc,
+    #3c24cc
+  );
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background: var(--color-dusk-900);
+  }
+  body {
+    @apply bg-dusk-900 text-fg font-sans antialiased;
+  }
+  ::selection {
+    background: var(--color-accent-500);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: 2px;
+  }
+}
+
+@utility spectrum-strand {
+  /* The brand's signature rule: a 2px hairline of the full sunset gradient */
+  height: 2px;
+  background: var(--spectrum);
+}
+
+@utility text-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
