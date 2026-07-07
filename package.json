@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:db": "node supabase/tests/test-migration.mjs"
   },
   "dependencies": {
     "@fontsource-variable/big-shoulders": "^5.2.6",
@@ -22,6 +23,7 @@
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
