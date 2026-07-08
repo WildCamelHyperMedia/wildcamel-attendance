@@ -155,15 +155,14 @@ six emails.
 2. Enter the **email** (e.g. `rudy@wildcamel.tv`, then `rakesh@wildcamel.tv`, …)
    and a **password**, and tick **Auto Confirm User** (so they can log in
    immediately). **Create user.** Repeat for all six.
-3. Share each person's password with them securely. After their first sign-in
-   they can change it themselves in the app (**Password** button, top of screen).
+3. Share each person's password with them securely. **Only you manage passwords**
+   — the app has no self-service password change. To change or reset anyone's
+   password (including your own), use this same **Authentication → Users** screen:
+   click the user → **Reset password**. Their attendance/task data is untouched.
 
 > The email must exactly match the seeded `employees` row. Someone can sign in
 > only if (a) they have an auth account here **and** (b) their email is an active
 > employee — otherwise they hit the "not registered" screen with no access.
->
-> Lost a password? Same screen: click the user → **Reset password**. Their data is
-> untouched.
 
 ### 4. Custom email (SMTP) — deferred (only needed for magic links)
 

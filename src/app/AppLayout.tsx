@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { ChangePassword } from '../components/ChangePassword'
 import camelDusk from '../assets/brand/camel-dusk.png'
 
 const tabs = [
@@ -14,7 +12,6 @@ export default function AppLayout() {
   const { state, signOut } = useAuth()
   const location = useLocation()
   const isAdmin = state.status === 'admin'
-  const [showPw, setShowPw] = useState(false)
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col">
@@ -36,12 +33,6 @@ export default function AppLayout() {
             </NavLink>
           )}
           <button
-            onClick={() => setShowPw(true)}
-            className="text-xs text-fg-3 hover:text-fg-2"
-          >
-            Password
-          </button>
-          <button
             onClick={signOut}
             className="text-xs text-fg-3 hover:text-fg-2"
             aria-label="Sign out"
@@ -50,8 +41,6 @@ export default function AppLayout() {
           </button>
         </div>
       </header>
-
-      {showPw && <ChangePassword onClose={() => setShowPw(false)} />}
 
       {/* Content */}
       <main className="flex-1 px-4 pt-4 pb-24">
