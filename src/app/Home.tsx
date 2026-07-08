@@ -10,7 +10,7 @@ import {
   fetchTasks,
 } from '../lib/api'
 import type { AttendanceSession } from '../lib/database.types'
-import { getPosition } from '../lib/geo'
+import { getPosition, type GeoFailure } from '../lib/geo'
 import { errorMessage } from '../lib/supabase'
 import { useNow } from '../lib/useNow'
 import {
@@ -21,8 +21,23 @@ import {
   fmtTime,
   inTz,
 } from '../lib/time'
-import { ContextBadge, Notice, Skeleton, SpectrumStrand } from '../components/ui'
+import { Button, ContextBadge, Notice, Skeleton, SpectrumStrand } from '../components/ui'
+import { EnableLocationHelp } from '../components/EnableLocationHelp'
 import { CheckInButton, CheckOutButton } from './CheckButton'
+
+// Short, actionable note shown when we couldn't read location at check-in/out.
+function geoNoteFor(status: GeoFailure): string {
+  switch (status) {
+    case 'denied':
+      return "Location is off for this site — you're marked Unknown."
+    case 'unavailable':
+      return "Couldn't get your location — Location Services may be off. You're marked Unknown."
+    case 'timeout':
+      return "Location took too long — you're marked Unknown."
+    case 'unsupported':
+      return "This browser can't share location — you're marked Unknown."
+  }
+}
 
 export default function Home() {
   const { state } = useAuth()
@@ -35,6 +50,8 @@ export default function Home() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [geoNote, setGeoNote] = useState<string | null>(null)
+  const [geoFail, setGeoFail] = useState<GeoFailure | null>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const now = useNow(1000)
 
@@ -69,14 +86,19 @@ export default function Home() {
     setBusy(true)
     setError(null)
     setGeoNote(null)
+    setGeoFail(null)
     const geo = await getPosition()
-    if (geo.status === 'denied') setGeoNote("Location off — you'll be marked Unknown.")
-    else if (geo.status !== 'ok') setGeoNote("Couldn't read location — marked Unknown.")
+    if (geo.status !== 'ok') {
+      setGeoFail(geo.status)
+      setGeoNote(geoNoteFor(geo.status))
+    }
     try {
       const session = await checkIn(geo.status === 'ok' ? geo.coords : null)
       setOpen(session)
       await load()
     } catch (e) {
+      // office_only employees get a thrown error here when not at the office;
+      // keep the Fix/Try-again buttons visible so they can enable location.
       setError(errorMessage(e))
     } finally {
       setBusy(false)
@@ -87,7 +109,12 @@ export default function Home() {
     setBusy(true)
     setError(null)
     setGeoNote(null)
+    setGeoFail(null)
     const geo = await getPosition()
+    if (geo.status !== 'ok') {
+      setGeoFail(geo.status)
+      setGeoNote(geoNoteFor(geo.status))
+    }
     try {
       await checkOut(geo.status === 'ok' ? geo.coords : null)
       setOpen(null)
@@ -97,6 +124,23 @@ export default function Home() {
     } finally {
       setBusy(false)
     }
+  }
+
+  // Re-read location after the user has (hopefully) enabled it, without forcing
+  // a fresh check-in. The already-recorded session keeps its label, but this
+  // confirms location works so the next check-in is correct.
+  async function retryLocation() {
+    setBusy(true)
+    const geo = await getPosition()
+    if (geo.status === 'ok') {
+      setGeoFail(null)
+      setGeoNote('Location is on now — your next check-in will be labelled correctly.')
+      setHelpOpen(false)
+    } else {
+      setGeoFail(geo.status)
+      setGeoNote(geoNoteFor(geo.status))
+    }
+    setBusy(false)
   }
 
   // The live shift timer shows the full elapsed time since check-in.
@@ -165,9 +209,27 @@ export default function Home() {
             </>
           )}
           {geoNote && <p className="text-xs text-gold">{geoNote}</p>}
+          {geoFail && geoFail !== 'unsupported' && (
+            <div className="flex gap-2">
+              <Button variant="subtle" onClick={retryLocation} disabled={busy}>
+                Try again
+              </Button>
+              <Button variant="ghost" onClick={() => setHelpOpen(true)} disabled={busy}>
+                Fix location
+              </Button>
+            </div>
+          )}
           {error && <Notice>{error}</Notice>}
         </div>
       </div>
+
+      {helpOpen && geoFail && (
+        <EnableLocationHelp
+          reason={geoFail}
+          onClose={() => setHelpOpen(false)}
+          onRetry={retryLocation}
+        />
+      )}
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 gap-3">
