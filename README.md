@@ -168,41 +168,44 @@ the team would silently never arrive. We route auth emails through **Resend**
 
 **b. Verify the wildcamel.tv sending domain**
 
-1. Resend dashboard → **Domains** → **Add Domain** → enter `wildcamel.tv` → **Add**.
-2. Resend shows a set of **DNS records** (typically 3: an MX/SPF `TXT`, a DKIM
-   `TXT` or `CNAME`, and sometimes a DMARC `TXT`).
-3. Add each record wherever `wildcamel.tv`'s DNS is hosted (GoDaddy, Cloudflare,
-   Namecheap, etc.):
-   - Log in to the domain registrar → find **DNS** / **DNS records**.
-   - For each Resend record, create a new record with the exact **Type**,
-     **Name/Host**, and **Value** Resend shows. (If your registrar auto-appends
-     the domain, enter the Name without the `.wildcamel.tv` suffix.)
-4. Back in Resend, click **Verify**. DNS can take anywhere from minutes to a few
-   hours to propagate; keep clicking Verify until all records show **Verified**.
+> `wildcamel.tv` DNS is hosted at **GoDaddy** (nameservers `ns*.domaincontrol.com`),
+> and email runs through Microsoft 365 + Proofpoint. Resend places its sending
+> records on a `send.` subdomain, so the steps below **do not touch your existing
+> email** — never edit the root `@` MX or root SPF TXT.
+
+1. Resend dashboard → **Domains** → **Add Domain** → enter `wildcamel.tv` → default
+   region → **Add**. (Verifying the root gives a clean `no-reply@wildcamel.tv`
+   sender; Resend still isolates its operational records on the `send` subdomain.)
+2. Resend shows ~3 **DNS records**: an **MX** and **SPF `TXT`** on the `send` host,
+   and a **DKIM `TXT`** at `resend._domainkey`. Copy the exact **Type / Name /
+   Value** from that screen (the DKIM key is unique to your domain).
+3. In **GoDaddy** → **Domain Portfolio → wildcamel.tv → DNS → Add New Record**,
+   add each one. **GoDaddy auto-appends `.wildcamel.tv`**, so type only the short
+   label (e.g. `send`, `resend._domainkey`) — never the full name, no trailing dot.
+4. Back in Resend → **Verify**. Propagation is usually minutes (up to a few hours).
 
 **c. Get SMTP credentials from Resend**
 
-1. Resend dashboard → **API Keys** (or **SMTP**) → create/copy the SMTP details.
-   Resend's SMTP settings are:
+1. Resend dashboard → **API Keys** → **Create API Key** (permission: Sending
+   access) → copy the key (starts with `re_…`) — **shown only once.** SMTP settings:
    - **Host**: `smtp.resend.com`
-   - **Port**: `465` (SSL) or `587` (TLS)
-   - **Username**: `resend`
-   - **Password**: your Resend **API key** (starts with `re_…`)
+   - **Port**: `465` (implicit TLS); use `587` if your network blocks 465
+   - **Username**: the literal word `resend` (**not** your email — the #1 mistake)
+   - **Password**: your Resend API key
 
 **d. Plug them into Supabase**
 
-1. Supabase dashboard → **Project Settings** → **Authentication** →
-   **SMTP Settings** (or **Authentication → Emails → SMTP**).
+1. Supabase dashboard → **Authentication → Emails → SMTP**
+   (`/dashboard/project/<ref>/auth/smtp`).
 2. Toggle **Enable Custom SMTP** on.
-3. Fill in:
-   - **Sender email**: e.g. `no-reply@wildcamel.tv` (must be on the verified domain)
-   - **Sender name**: `Wild Camel`
-   - **Host**: `smtp.resend.com`
-   - **Port**: `465`
-   - **Username**: `resend`
-   - **Password**: your Resend API key
-4. **Save**.
-5. (Optional) Send yourself a magic link from the app to confirm delivery.
+3. Fill in: **Sender email** `no-reply@wildcamel.tv` (must be on the verified
+   domain) · **Sender name** `Wild Camel` · **Host** `smtp.resend.com` · **Port**
+   `465` · **Username** `resend` · **Password** your API key → **Save**.
+4. (Optional shortcut) Supabase's native **Resend integration** (Integrations tab)
+   can auto-fill these fields via a connect flow instead of pasting the key.
+5. After enabling custom SMTP, the auth-email limit defaults to **30/hour** — raise
+   it under **Authentication → Rate Limits** if you expect bursts (stay under
+   Resend's 100/day free cap). Then send yourself a magic link to confirm delivery.
 
 ### 5. Push to GitHub + add secrets + enable Pages
 
