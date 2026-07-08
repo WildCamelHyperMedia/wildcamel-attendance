@@ -25,7 +25,12 @@ export default function Login() {
     setError(null)
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
+      // shouldCreateUser must be true: an employee's Supabase auth account is
+      // created on their first magic-link click. Authorization is NOT done here
+      // — it's the employees allowlist enforced by RLS (a non-allowlisted email
+      // authenticates fine but sees the "not registered" screen and can read
+      // nothing). Requires "Allow new users to sign up" = ON in Supabase Auth.
+      options: { emailRedirectTo: redirectTo, shouldCreateUser: true },
     })
     setBusy(false)
     if (error) setError(errorMessage(error))

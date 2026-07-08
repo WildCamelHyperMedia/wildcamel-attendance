@@ -131,11 +131,14 @@ So magic links and admin logins redirect back to the live app.
    (with the trailing slash). Add `http://localhost:5173/` too if you want magic
    links to work in local dev.
 4. **Save**.
-5. While you're in **Authentication → Providers → Email**: make sure **Email** is
-   **enabled**. Turn **Confirm email** ON (magic links rely on it). If there's a
-   **“Allow new users to sign up”** toggle, turn it **OFF** — employees are added
-   by the admin, not by self-signup. (Our code also passes
-   `shouldCreateUser: false`, so magic links only work for known emails.)
+5. While you're in **Authentication → Sign In / Providers**: make sure **Email**
+   is **enabled** and **Confirm email** is **ON** (magic links rely on it). Leave
+   **“Allow new users to sign up” ON.** This is deliberate: an employee's auth
+   account is created the first time they click a magic link, and access is gated
+   by the **employees allowlist enforced in the database (RLS)** — anyone can
+   authenticate, but a non-allowlisted email lands on the “not registered” screen
+   and can read nothing. (Turning signups off would block every employee's first
+   login.)
 
 ### 3. Create Rudy's admin login
 
@@ -305,7 +308,8 @@ the ones marked 🖐 are worth checking by hand in the live app.
 ## Go-live checklist
 
 - [ ] Migration run; verification queries look right (4 tables, 6 employees, Rudy admin).
-- [ ] Auth: Email provider enabled, Confirm email on, self-signup off.
+- [ ] Auth: Email provider enabled, Confirm email on, "Allow new users to sign
+      up" ON (allowlist is RLS-enforced; signups-off would block first logins).
 - [ ] Site URL + Redirect URLs match the live Pages URL exactly (trailing slash).
 - [ ] Rudy's auth user created and can log in.
 - [ ] Custom SMTP (Resend) configured; wildcamel.tv domain **Verified**; a test magic link arrives.
