@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { firstName } from '../lib/format'
 import { SpectrumStrand } from '../components/ui'
+import { ChangePassword } from '../components/ChangePassword'
 import wordmarkWhite from '../assets/brand/wordmark-white.png'
 import camelDusk from '../assets/brand/camel-dusk.png'
 
@@ -17,6 +19,7 @@ export default function AdminLayout() {
   const { state, signOut } = useAuth()
   const location = useLocation()
   const employee = state.status === 'admin' ? state.employee : null
+  const [showPw, setShowPw] = useState(false)
 
   return (
     <div className="min-h-dvh lg:flex">
@@ -51,9 +54,14 @@ export default function AdminLayout() {
               <p className="truncate text-sm font-medium text-fg">
                 {employee ? firstName(employee.full_name, employee.email) : 'Admin'}
               </p>
-              <button onClick={signOut} className="text-xs text-fg-3 hover:text-fg-2">
-                Sign out
-              </button>
+              <div className="flex gap-3">
+                <button onClick={() => setShowPw(true)} className="text-xs text-fg-3 hover:text-fg-2">
+                  Password
+                </button>
+                <button onClick={signOut} className="text-xs text-fg-3 hover:text-fg-2">
+                  Sign out
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -62,15 +70,22 @@ export default function AdminLayout() {
       {/* Content */}
       <main className="min-w-0 flex-1">
         <div className="mx-auto max-w-6xl px-5 py-6 lg:px-8 lg:py-8">
-          <div className="mb-5 flex items-center justify-between lg:hidden">
+          <div className="mb-5 flex items-center justify-between gap-3 lg:hidden">
             <span className="text-display text-sm font-bold text-fg-2">Admin</span>
-            <button onClick={signOut} className="text-xs text-fg-3 hover:text-fg-2">
-              Sign out
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setShowPw(true)} className="text-xs text-fg-3 hover:text-fg-2">
+                Password
+              </button>
+              <button onClick={signOut} className="text-xs text-fg-3 hover:text-fg-2">
+                Sign out
+              </button>
+            </div>
           </div>
           <Outlet key={location.pathname} />
         </div>
       </main>
+
+      {showPw && <ChangePassword onClose={() => setShowPw(false)} />}
     </div>
   )
 }

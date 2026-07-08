@@ -6,8 +6,12 @@ gets an admin dashboard. Static frontend (Vite + React) on **GitHub Pages**,
 backed by **Supabase** (Postgres + Auth + Row Level Security). No custom server —
 every security rule lives in the database.
 
-- **Employees** sign in with a passwordless email magic link.
-- **Admin (Rudy)** signs in with email + password.
+- **Everyone** signs in with **email + password** (accounts are created by the
+  admin in the Supabase dashboard; the app routes by role automatically).
+  Passwordless magic links are the intended long-term flow, but they need a
+  custom email sender (Resend + DNS) — deferred for now, see step 4. To switch
+  back later, set `shouldCreateUser` back on in `src/routes/Login.tsx` and restore
+  the magic-link form (git history has it).
 - All anti-tamper logic (server clock, no backdating, RLS, immutable history) is
   enforced in Postgres, because a static site can't be trusted with it.
 
@@ -140,22 +144,34 @@ So magic links and admin logins redirect back to the live app.
    and can read nothing. (Turning signups off would block every employee's first
    login.)
 
-### 3. Create Rudy's admin login
+### 3. Create the login accounts
 
-The migration seeds Rudy's *employee row* (with `is_admin = true`), but his actual
-*auth account* (with a password) is created here.
+The migration seeds everyone's *employee row* (Rudy with `is_admin = true`), but
+each person's *auth account* (with a password) is created here. Do this for all
+six emails.
 
 1. Supabase dashboard → **Authentication** → **Users** → **Add user** → **Create
    new user**.
-2. **Email**: `rudy@wildcamel.tv`
-3. **Password**: the admin password from your password manager.
-4. Tick **Auto Confirm User** (so he can log in immediately).
-5. **Create user**.
+2. Enter the **email** (e.g. `rudy@wildcamel.tv`, then `rakesh@wildcamel.tv`, …)
+   and a **password**, and tick **Auto Confirm User** (so they can log in
+   immediately). **Create user.** Repeat for all six.
+3. Share each person's password with them securely. After their first sign-in
+   they can change it themselves in the app (**Password** button, top of screen).
 
-> Lost the password later? Same screen: click Rudy's row → **Reset password** (or
-> delete and re-create the user). It takes a few seconds — his data is untouched.
+> The email must exactly match the seeded `employees` row. Someone can sign in
+> only if (a) they have an auth account here **and** (b) their email is an active
+> employee — otherwise they hit the "not registered" screen with no access.
+>
+> Lost a password? Same screen: click the user → **Reset password**. Their data is
+> untouched.
 
-### 4. Custom email (SMTP) — required
+### 4. Custom email (SMTP) — deferred (only needed for magic links)
+
+> **You can skip this section for now.** It's only required if you switch to
+> passwordless **magic-link** login. With the email-+-password login above, no
+> SMTP is needed and the app works fully. Come back here when you're ready to
+> enable magic links (it needs a Resend account + `wildcamel.tv` DNS records,
+> which is easiest when whoever manages the domain is available).
 
 **This is not optional.** Supabase's built-in email only delivers to members of
 your Supabase organization and is throttled to ~2 emails/hour — so magic links to
@@ -245,13 +261,12 @@ correctly until they do.
 ### 6. First login test
 
 1. On your **phone**, open the Pages URL.
-2. Enter `emmad@wildcamel.tv` → **Send magic link**.
-3. Open the email, tap the link — it should open the app, signed in.
-4. Tap **Check In** (allow location when asked), watch the timer run, then
+2. Sign in with `emmad@wildcamel.tv` and that account's password.
+3. Tap **Check In** (allow location when asked), watch the timer run, then
    press-and-hold **Check Out**.
-5. Open **History** — the session should be there with an Office/Remote badge.
-6. Test admin: open the app, tap **Admin sign in**, log in as
-   `rudy@wildcamel.tv` — you should land on the Live board and see the check-in.
+4. Open **History** — the session should be there with an Office/Remote badge.
+5. Test admin: sign out, sign in as `rudy@wildcamel.tv` — you should land on the
+   Live board and see the check-in.
 
 > Tip: **Add to Home Screen** from the browser share menu so it opens like a
 > native app (and so push notifications can work later on iPhone).
